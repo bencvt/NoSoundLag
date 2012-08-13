@@ -1,6 +1,6 @@
 package net.minecraft.src;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 import net.minecraft.client.Minecraft;
 
@@ -16,15 +16,16 @@ import net.minecraft.client.Minecraft;
 public abstract class SoundMuffler {
     public static final String SOURCE_URL = "https://github.com/bencvt/NoSoundLag";
     public static final long MAX_LATENCY = 5000L; // that's one wicked ping time
-    private static final ConcurrentHashMap<String, Long> sounds = new ConcurrentHashMap<String, Long>(16, 0.75f, 2);
-    private static Thread reaperThread;
+    private static final HashMap<String, Long> sounds = new HashMap<String, Long>();
+    private static long lastRemoveExpired;
 
     public static void muffle(String soundName, int blockX, int blockY, int blockZ) {
+    	long now = System.currentTimeMillis();
         String key = getKey(soundName, blockX, blockY, blockZ);
-        sounds.put(key, System.currentTimeMillis() + MAX_LATENCY);
+        sounds.put(key, now + MAX_LATENCY);
         //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("muffling... " + key);
-        if (reaperThread == null) {
-            startReaperThread();
+        if (now > lastRemoveExpired + 5*60000) {
+        	removeExpired();
         }
     }
 
@@ -47,30 +48,13 @@ public abstract class SoundMuffler {
      * perhaps because the player respawned elsewhere.
      */
     public static void removeExpired() {
-        long now = System.currentTimeMillis();
+    	lastRemoveExpired = System.currentTimeMillis();
         for (String key : sounds.keySet()) {
             Long value = sounds.get(key);
-            if (value != null && now > value) {
+            if (value != null && lastRemoveExpired > value) {
                 sounds.remove(key);
             }
         }
-    }
-
-    private static void startReaperThread() {
-        reaperThread = new Thread(SoundMuffler.class.getName() + " reaper thread") {
-            @Override
-            public void run() {
-                while (true) {
-                    removeExpired();
-                    try {
-                        Thread.sleep(5 * 60000);
-                    } catch (InterruptedException e) {
-                        return;
-                    }
-                }
-            }
-        };
-        reaperThread.start();
     }
 
     /**
