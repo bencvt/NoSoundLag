@@ -42,6 +42,7 @@ Change log
    usable block (like a furnace) it incorrectly played the placing sound.
    Thanks @bluffamuchuck for the report.
  - simplify code a bit by removing threading
+
 1.0:
  - initial release
 
