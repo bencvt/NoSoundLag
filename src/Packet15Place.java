@@ -38,44 +38,7 @@ public class Packet15Place extends Packet
         this.yOffset = yOff;
         this.zOffset = zOff;
         // begin modified code
-        if (Minecraft.getMinecraft().isIntegratedServerRunning()) {
-            // single player world, do nothing
-        } else if (x == -1 && y == -1 && z == -1 && direction == 255) {
-            // special case: using an item (e.g., eating)
-            // just let the sound lag happen for this
-        } else if (itemStack != null
-                && itemStack.getItem() != null
-                && itemStack.getItem() instanceof ItemBlock) {
-            // placing a block: eliminate sound lag if we can
-            int blockId = ((ItemBlock) itemStack.getItem()).getBlockID();
-            if (blockId >= 0
-                    && blockId < Block.blocksList.length
-                    && Block.blocksList[blockId] != null
-                    && Block.blocksList[blockId].stepSound != null) {
-                // x/y/z are for the adjacent block, we want the actual block
-                int actualX = x;
-                int actualY = y;
-                int actualZ = z;
-                switch (direction) {
-                case 0: actualY--; break; // below
-                case 1: actualY++; break; // above
-                case 2: actualZ--; break; // north
-                case 3: actualZ++; break; // south
-                case 4: actualX--; break; // west
-                case 5: actualX++; break; // east
-                }
-                StepSound stepSound = Block.blocksList[blockId].stepSound;
-                // parameter math copied from ItemBlock.tryPlaceIntoWorld()
-                Minecraft.getMinecraft().sndManager.playSound(
-                        stepSound.getStepSound(),
-                        (float) actualX + 0.5F,
-                        (float) actualY + 0.5F,
-                        (float) actualZ + 0.5F,
-                        (stepSound.getVolume() + 1.0F) / 2.0F,
-                        stepSound.getPitch() * 0.8F);
-                SoundMuffler.muffle(stepSound.getStepSound(), actualX, actualY, actualZ);
-            }
-        }
+        Packet15PlaceHook.onBlockPlace(x, y, z, direction, itemStack);
         // end modified code
     }
 
