@@ -20,12 +20,12 @@ public abstract class SoundMuffler {
     private static long lastRemoveExpired;
 
     public static void muffle(String soundName, int blockX, int blockY, int blockZ) {
-    	long now = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
         String key = getKey(soundName, blockX, blockY, blockZ);
         sounds.put(key, now + MAX_LATENCY);
         //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("muffling... " + key);
         if (now > lastRemoveExpired + 5*60000) {
-        	removeExpired();
+            removeExpired();
         }
     }
 
@@ -48,7 +48,7 @@ public abstract class SoundMuffler {
      * perhaps because the player respawned elsewhere.
      */
     public static void removeExpired() {
-    	lastRemoveExpired = System.currentTimeMillis();
+        lastRemoveExpired = System.currentTimeMillis();
         for (String key : sounds.keySet()) {
             Long value = sounds.get(key);
             if (value != null && lastRemoveExpired > value) {
