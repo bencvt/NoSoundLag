@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-JAR=$PWD/NoSoundLag-1.0.zip
+JAR=$PWD/NoSoundLag-1.0.1.zip
 
 rm $JAR || true
 

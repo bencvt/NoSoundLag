@@ -35,6 +35,16 @@ Should be compatible with every mod that does not overwrite:
 - eg.class (Packet15Place)
 - cr.class (Packet62LevelSound)
 
+Change log
+----------
+1.0.1:
+ - bug fix: if you were holding a placeable block when you right-clicked a
+   usable block (like a furnace) it incorrectly played the placing sound.
+   Thanks @bluffamuchuck for the report.
+ - simplify code a bit by removing threading
+1.0:
+ - initial release
+
 Build instructions
 ------------------
 If you just want to install the mod, skip this section. Just download the zip
