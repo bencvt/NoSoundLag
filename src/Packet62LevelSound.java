@@ -103,10 +103,7 @@ public class Packet62LevelSound extends Packet
     public void processPacket(NetHandler par1NetHandler)
     {
         // begin modified code
-        int blockX = SoundMuffler.getBlockCoord(func_73572_f());
-        int blockY = SoundMuffler.getBlockCoord(func_73568_g());
-        int blockZ = SoundMuffler.getBlockCoord(func_73569_h());
-        if (SoundMuffler.removeAndCheckMuffle(soundName, blockX, blockY, blockZ)) {
+        if (SoundMuffler.checkMuffle(soundName, func_73572_f(), func_73568_g(), func_73569_h())) {
             par1NetHandler.handleLevelSound(this);
         }
         // end modified code

@@ -63,7 +63,7 @@ public abstract class Packet15PlaceHook {
                 (float) placeZ + 0.5F,
                 (stepSound.getVolume() + 1.0F) / 2.0F,
                 stepSound.getPitch() * 0.8F);
-        SoundMuffler.muffle(stepSound.getStepSound(), placeX, placeY, placeZ);
+        SoundMuffler.muffleBlock(stepSound.getStepSound(), placeX, placeY, placeZ);
     }
 
     public static boolean doesBlockPreventRightClick(int x, int y, int z) {

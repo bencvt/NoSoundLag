@@ -11,8 +11,8 @@ code duplicated by the client. One unfortunate side effect is that if you're on
 a noticeably laggy connection, your block placement and footstep sounds will
 lag as well. The server controls those sounds now, not the client.
 
-Hopefully Mojang will fix this soon (1.3.2 is coming). A proper fix will involve
-changing both the server and the client.
+A proper fix will involve changing both the server and the client, which doesn't
+appear to be coming from Mojang. Maybe in 1.4.
 
 In the meantime, this client mod exists. It does not require any server-side
 modifications, so it's not perfect: a stray extra footstep might sneak through
@@ -31,12 +31,17 @@ This mod does *not* require ModLoader or any other mod management system.
 Compatibility
 -------------
 Should be compatible with every mod that does not overwrite:
-- atf.class (EntityClientPlayerMP)
+- atg.class (EntityClientPlayerMP)
 - eg.class (Packet15Place)
 - cr.class (Packet62LevelSound)
 
 Change log
 ----------
+1.3.2:
+ - recompiled for 1.3.2
+ - bug fix: SoundMuffler.removeExpired should no longer cause crashes.
+ - new footstep muffling algorithm, should be more effective.
+
 1.0.1:
  - bug fix: if you were holding a placeable block when you right-clicked a
    usable block (like a furnace) it incorrectly played the placing sound.

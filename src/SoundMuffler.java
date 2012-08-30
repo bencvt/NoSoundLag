@@ -1,6 +1,7 @@
 package net.minecraft.src;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
 import net.minecraft.client.Minecraft;
 
@@ -16,55 +17,101 @@ import net.minecraft.client.Minecraft;
 public abstract class SoundMuffler {
     public static final String SOURCE_URL = "https://github.com/bencvt/NoSoundLag";
     public static final long MAX_LATENCY = 5000L; // that's one wicked ping time
-    private static final HashMap<String, Long> sounds = new HashMap<String, Long>();
+    public static final double STEP_RADIUS_SQUARED = 9.0; // blocks^2
+    private static final HashMap<String, Long> blockSounds = new HashMap<String, Long>();
+    private static final HashMap<Vec3, Long> lastSteps = new HashMap<Vec3, Long>();
     private static long lastRemoveExpired;
 
-    public static void muffle(String soundName, int blockX, int blockY, int blockZ) {
-        long now = System.currentTimeMillis();
-        String key = getKey(soundName, blockX, blockY, blockZ);
-        sounds.put(key, now + MAX_LATENCY);
-        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("muffling... " + key);
-        if (now > lastRemoveExpired + 5*60000) {
-            removeExpired();
+    /**
+     * Muffle a block placement sound, identified by a sound name and integer x/y/z coordinates.
+     */
+    public static void muffleBlock(String soundName, int blockX, int blockY, int blockZ) {
+        final long now = System.currentTimeMillis();
+        String key = getBlockSoundKey(soundName, blockX, blockY, blockZ);
+        blockSounds.put(key, now + MAX_LATENCY);
+        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a75muffling block... " + key);
+        if (now > lastRemoveExpired + 60000L) {
+            removeExpiredBlockSounds();
         }
     }
 
     /**
-     * @return true if the sound event should be played, false to filter out
+     * Periodically remove any block sounds that we were planning to muffle but
+     * never received from the server, perhaps because the player respawned
+     * elsewhere.
+     * <p>
+     * Step sounds are removed more aggressively in checkMuffle.
      */
-    public static boolean removeAndCheckMuffle(String soundName, int blockX, int blockY, int blockZ) {
-        String key = getKey(soundName, blockX, blockY, blockZ);
-        Long value = sounds.remove(key);
-        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("checking " + key);
-        if (value == null || System.currentTimeMillis() > value) {
-            return true;
-        }
-        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("...muffled " + key);
-        return false;
-    }
-
-    /**
-     * Remove any sounds that we were planning to muffle but never received from the server,
-     * perhaps because the player respawned elsewhere.
-     */
-    public static void removeExpired() {
+    public static void removeExpiredBlockSounds() {
         lastRemoveExpired = System.currentTimeMillis();
-        for (String key : sounds.keySet()) {
-            Long value = sounds.get(key);
-            if (value != null && lastRemoveExpired > value) {
-                sounds.remove(key);
+        final Iterator<String> it = blockSounds.keySet().iterator();
+        while (it.hasNext()) {
+            String key = it.next();
+            Long blockExpiry = blockSounds.get(key);
+            if (lastRemoveExpired >= blockExpiry) {
+                it.remove();
             }
         }
     }
 
     /**
-     * Uniquely (well, as uniquely as feasible) identify a sound event.
+     * Muffle a footstep sound, identified by double x/y/z coordinates.
      */
-    private static String getKey(String soundName, int blockX, int blockY, int blockZ) {
+    public static void muffleStep(double x, double y, double z) {
+        final long now = System.currentTimeMillis();
+        Vec3 v = new Vec3(x, y, z);
+        lastSteps.put(v, now + MAX_LATENCY);
+        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a75muffling step... (" + (int)x + "," + (int)y + "," + (int)z + ")");
+    }
+
+    /**
+     * @return true if the sound event should be played, false to filter out
+     */
+    public static boolean checkMuffle(String soundName, double x, double y, double z) {
+        final long now = System.currentTimeMillis();
+
+        // block placement: exact
+        String key = getBlockSoundKey(soundName, getBlockCoord(x), getBlockCoord(y), getBlockCoord(z));
+        Long blockExpiry = blockSounds.remove(key);
+        if (blockExpiry != null && now < blockExpiry) {
+            //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a74...muffled block " + key);
+            return false;
+        }
+
+        // footstep: fuzzy
+        if (soundName.startsWith("step.")) {
+            final Iterator<Vec3> it = lastSteps.keySet().iterator();
+            while (it.hasNext()) {
+                Vec3 v = it.next();
+                Long stepExpiry = lastSteps.get(v);
+                if (now >= stepExpiry) {
+                    it.remove();
+                } else if (inRange(v, x, y, z)) {
+                    //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a74...muffled step " + key);
+                    return false;
+                }
+            }
+        }
+
+        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a72allowed " + key);
+        return true;
+    }
+
+    private static boolean inRange(Vec3 v, double x, double y, double z) {
+        double diffX = x - v.xCoord;
+        double diffY = y - v.yCoord;
+        double diffZ = z - v.zCoord;
+        return diffX*diffX + diffY*diffY + diffZ*diffZ < STEP_RADIUS_SQUARED;
+    }
+
+    /**
+     * Uniquely (well, as uniquely as feasible) identify a block placement sound event.
+     */
+    private static String getBlockSoundKey(String soundName, int blockX, int blockY, int blockZ) {
         return String.format("%s@%d,%d,%d", soundName, blockX, blockY, blockZ);
     }
 
-    public static int getBlockCoord(double coord) {
+    private static int getBlockCoord(double coord) {
         return (int) (coord > 0.0 ? coord : coord - 1.0);
     }
 }

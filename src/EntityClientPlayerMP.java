@@ -284,7 +284,7 @@ public class EntityClientPlayerMP extends EntityPlayerSP
                 (float) posZ,
                 stepSound.getVolume() * 0.15F,
                 stepSound.getPitch());
-        SoundMuffler.muffle(stepSound.getStepSound(), x, y + (int) yOffset, z);
+        SoundMuffler.muffleStep(posX, posY, posZ);
     }
     // end modified code
 }
