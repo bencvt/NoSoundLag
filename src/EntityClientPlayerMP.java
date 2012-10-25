@@ -259,6 +259,30 @@ public class EntityClientPlayerMP extends EntityPlayerSP
 
     // begin modified code
     @Override
+    public void moveEntity(double x, double y, double z) {
+        super.moveEntity(x, y, z);
+        if (!Minecraft.getMinecraft().isIntegratedServerRunning()) {
+            SoundMuffler.walkTrail.update(posX, posY, posZ);
+            if (!wasInWater && inWater) {
+                // parameter math copied from Entity.onEntityUpdate()
+                float splashVolume = 0.2F * MathHelper.sqrt_double(
+                        motionX*motionX*0.20000000298023224D +
+                        motionY*motionY +
+                        motionZ*motionZ*0.20000000298023224D);
+                Minecraft.getMinecraft().sndManager.playSound(
+                        "liquid.splash",
+                        (float) posX,
+                        (float) (posY - yOffset),
+                        (float) posZ,
+                        splashVolume,
+                        1.0F + (rand.nextFloat() - rand.nextFloat())*0.4F);
+            }
+            wasInWater = inWater;
+        }
+    }
+    public static boolean wasInWater;
+
+    @Override
     protected void playStepSound(int x, int y, int z, int blockId) {
         if (Minecraft.getMinecraft().isIntegratedServerRunning()) {
             super.playStepSound(x, y, z, blockId);
@@ -279,7 +303,6 @@ public class EntityClientPlayerMP extends EntityPlayerSP
                 (float) posZ,
                 stepSound.getVolume() * 0.15F,
                 stepSound.getPitch());
-        SoundMuffler.muffleStep(posX, posY, posZ);
     }
     // end modified code
 }

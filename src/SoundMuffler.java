@@ -16,89 +16,125 @@ import net.minecraft.client.Minecraft;
  */
 public abstract class SoundMuffler {
     public static final String SOURCE_URL = "https://github.com/bencvt/NoSoundLag";
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
     public static final long MAX_LATENCY = 5000L; // that's one wicked ping time
-    public static final double STEP_RADIUS_SQUARED = 9.0; // blocks^2
-    private static final HashMap<String, Long> blockSounds = new HashMap<String, Long>();
-    private static final HashMap<Vec3, Long> lastSteps = new HashMap<Vec3, Long>();
-    private static long lastRemoveExpired;
+    public static final long CLEAN_EXPIRED_INTERVAL = 60000L;
+    public static final double FUZZY_TRAIL_RADIUS_SQUARED = 9.0; // blocks^2
 
-    /**
-     * Muffle a block placement sound, identified by a sound name and integer x/y/z coordinates.
-     */
-    public static void muffleBlock(String soundName, int blockX, int blockY, int blockZ) {
-        final long now = System.currentTimeMillis();
-        String key = getBlockSoundKey(soundName, blockX, blockY, blockZ);
-        blockSounds.put(key, now + MAX_LATENCY);
-        if (DEBUG) {
-            log("\u00a75muffling block... " + key);
-        }
-        if (now > lastRemoveExpired + 60000L) {
-            removeExpiredBlockSounds();
+    public static class SoundTrailNode {
+        public final Vec3 pos;
+        public long expiry;
+
+        public SoundTrailNode(int blockX, int blockY, int blockZ, long expiry) {
+            pos = Vec3.createVectorHelper(blockX, blockY, blockZ);
+            this.expiry = expiry;
         }
     }
 
-    /**
-     * Periodically remove any block sounds that we were planning to muffle but
-     * never received from the server, perhaps because the player respawned
-     * elsewhere.
-     * <p>
-     * Step sounds are removed more aggressively in checkMuffle.
-     */
-    public static void removeExpiredBlockSounds() {
-        lastRemoveExpired = System.currentTimeMillis();
-        final Iterator<String> it = blockSounds.keySet().iterator();
-        while (it.hasNext()) {
-            String key = it.next();
-            Long blockExpiry = blockSounds.get(key);
-            if (lastRemoveExpired >= blockExpiry) {
-                it.remove();
+    public static class SoundTrail {
+        private final HashMap<String, SoundTrailNode> trail = new HashMap<String, SoundTrailNode>();
+        private final String name;
+        private long nextClean;
+
+        public SoundTrail(String name) {
+            this.name = name;
+        }
+
+        public void update(String soundName, int blockX, int blockY, int blockZ) {
+            final long now = System.currentTimeMillis();
+            String key = getSoundEventKey(soundName, blockX, blockY, blockZ);
+            if (trail.containsKey(key)) {
+                trail.get(key).expiry = now + MAX_LATENCY;
+            } else {
+                trail.put(key, new SoundTrailNode(blockX, blockY, blockZ, now + MAX_LATENCY));
+            }
+            if (DEBUG && !name.equals("walk")) {
+                log("\u00a75updated sound trail " + name + ": " + key + "; size=" + trail.size());
+            }
+
+            // Periodically remove any sounds that we were planning to muffle
+            // but never received from the server, perhaps because the player
+            // respawned elsewhere.
+            if (now >= nextClean) {
+                int count = 0;
+                final Iterator<SoundTrailNode> it = trail.values().iterator();
+                while (it.hasNext()) {
+                    SoundTrailNode node = it.next();
+                    if (now >= node.expiry) {
+                        count++;
+                        it.remove();
+                    }
+                }
+                if (DEBUG) {
+                    log("\u00a73cleaned " + count + "/" + (count + trail.size()) +
+                            " expired nodes for " + name);
+                }
+                nextClean = now + CLEAN_EXPIRED_INTERVAL;
             }
         }
-    }
 
-    /**
-     * Muffle a footstep sound, identified by double x/y/z coordinates.
-     */
-    public static void muffleStep(double x, double y, double z) {
-        final long now = System.currentTimeMillis();
-        Vec3 v = Vec3.createVectorHelper(x, y, z);
-        lastSteps.put(v, now + MAX_LATENCY);
-        if (DEBUG) {
-            log("\u00a75muffling step... (" + (int)x + "," + (int)y + "," + (int)z + ")");
+        public void update(double x, double y, double z) {
+            update("", getBlockCoord(x), getBlockCoord(y), getBlockCoord(z));
+        }
+
+        public boolean isOnTrailExact(String key) {
+            if (trail.containsKey(key)) {
+                if (System.currentTimeMillis() >= trail.get(key).expiry) {
+                    trail.remove(key);
+                } else {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean isOnTrailFuzzy(double x, double y, double z) {
+            final long now = System.currentTimeMillis();
+            final Iterator<SoundTrailNode> it = trail.values().iterator();
+            while (it.hasNext()) {
+                SoundTrailNode node = it.next();
+                if (now >= node.expiry) {
+                    it.remove();
+                } else if (node.pos.squareDistanceTo(x, y, z) < FUZZY_TRAIL_RADIUS_SQUARED) {
+                    // Do not remove the node; it's not expired yet.
+                    return true;
+                }
+            }
+            return false;
         }
     }
+
+    public static final SoundTrail placeTrail = new SoundTrail("place");
+    public static final SoundTrail walkTrail = new SoundTrail("walk");
 
     /**
      * @return true if the sound event should be played, false to filter out
      */
     public static boolean checkMuffle(String soundName, double x, double y, double z) {
-        final long now = System.currentTimeMillis();
+        String key = getSoundEventKey(soundName, getBlockCoord(x), getBlockCoord(y), getBlockCoord(z));
 
-        // block placement: exact
-        String key = getBlockSoundKey(soundName, getBlockCoord(x), getBlockCoord(y), getBlockCoord(z));
-        Long blockExpiry = blockSounds.remove(key);
-        if (blockExpiry != null && now < blockExpiry) {
+        // Block placement: exact.
+        //
+        // Not bulletproof, though: if a player places, destroys, then replaces
+        // the same exact block within their latency time, they may get echoes.
+        if (placeTrail.isOnTrailExact(key)) {
             if (DEBUG) {
-                log("\u00a74...muffled block " + key);
+                log("\u00a74...muffled place: " + key);
             }
             return false;
         }
 
-        // footstep: fuzzy
-        if (soundName.startsWith("step.")) {
-            final Iterator<Vec3> it = lastSteps.keySet().iterator();
-            while (it.hasNext()) {
-                Vec3 v = it.next();
-                Long stepExpiry = lastSteps.get(v);
-                if (now >= stepExpiry) {
-                    it.remove();
-                } else if (inRange(v, x, y, z)) {
-                    if (DEBUG) {
-                        log("\u00a74...muffled step " + key);
-                    }
-                    return false;
+        // Player trail: fuzzy.
+        //
+        // We may end up muffling some other entity's step/splash sound if
+        // they're following the player entity closely. Alas, this is
+        // unavoidable.
+        if (soundName.startsWith("step.") || soundName.equals("liquid.splash")) {
+            if (walkTrail.isOnTrailFuzzy(x, y, z)) {
+                if (DEBUG) {
+                    log("\u00a74...muffled walk: " + key);
                 }
+                return false;
             }
         }
 
@@ -108,25 +144,21 @@ public abstract class SoundMuffler {
         return true;
     }
 
-    private static boolean inRange(Vec3 v, double x, double y, double z) {
-        double diffX = x - v.xCoord;
-        double diffY = y - v.yCoord;
-        double diffZ = z - v.zCoord;
-        return diffX*diffX + diffY*diffY + diffZ*diffZ < STEP_RADIUS_SQUARED;
-    }
-
     /**
-     * Uniquely (well, as uniquely as feasible) identify a block placement sound event.
+     * Uniquely (well, as uniquely as feasible) identify a sound event.
      */
-    private static String getBlockSoundKey(String soundName, int blockX, int blockY, int blockZ) {
-        return String.format("%s@%d,%d,%d", soundName, blockX, blockY, blockZ);
+    public static String getSoundEventKey(String soundName, int blockX, int blockY, int blockZ) {
+        return new StringBuilder().append(soundName).append('@')
+                .append(blockX).append(',')
+                .append(blockY).append(',')
+                .append(blockZ).toString();
     }
 
-    private static int getBlockCoord(double coord) {
-        return (int) (coord > 0.0 ? coord : coord - 1.0);
+    public static int getBlockCoord(double coord) {
+        return (int) Math.floor(coord);
     }
 
-    private static void log(String message) {
+    public static void log(String message) {
         Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(message);
     }
 }

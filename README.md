@@ -39,6 +39,7 @@ Change log
 ----------
 1.4.2:
  - recompiled for 1.4.2
+ - fix player splashes as well
 
 1.3.2:
  - recompiled for 1.3.2
