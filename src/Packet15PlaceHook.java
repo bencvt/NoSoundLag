@@ -54,16 +54,17 @@ public abstract class Packet15PlaceHook {
         case 5: placeX++; break; // east
         }
 
-        StepSound stepSound = Block.blocksList[placeBlockId].stepSound;
-        // parameter math copied from ItemBlock.tryPlaceIntoWorld()
+        StepSound blockSound = Block.blocksList[placeBlockId].stepSound;
+        String blockSoundId = blockSound.func_82593_b();
+        // parameter math copied from ItemBlock.onItemUse()
         Minecraft.getMinecraft().sndManager.playSound(
-                stepSound.getStepSound(),
+                blockSoundId,
                 (float) placeX + 0.5F,
                 (float) placeY + 0.5F,
                 (float) placeZ + 0.5F,
-                (stepSound.getVolume() + 1.0F) / 2.0F,
-                stepSound.getPitch() * 0.8F);
-        SoundMuffler.muffleBlock(stepSound.getStepSound(), placeX, placeY, placeZ);
+                (blockSound.getVolume() + 1.0F) / 2.0F,
+                blockSound.getPitch() * 0.8F);
+        SoundMuffler.muffleBlock(blockSoundId, placeX, placeY, placeZ);
     }
 
     public static boolean doesBlockPreventRightClick(int x, int y, int z) {

@@ -12,7 +12,7 @@ a noticeably laggy connection, your block placement and footstep sounds will
 lag as well. The server controls those sounds now, not the client.
 
 A proper fix will involve changing both the server and the client, which doesn't
-appear to be coming from Mojang. Maybe in 1.4.
+appear to be coming from Mojang. :-(
 
 In the meantime, this client mod exists. It does not require any server-side
 modifications, so it's not perfect: a stray extra footstep might sneak through
@@ -37,6 +37,9 @@ Should be compatible with every mod that does not overwrite:
 
 Change log
 ----------
+1.4.2:
+ - recompiled for 1.4.2
+
 1.3.2:
  - recompiled for 1.3.2
  - bug fix: SoundMuffler.removeExpired should no longer cause crashes.

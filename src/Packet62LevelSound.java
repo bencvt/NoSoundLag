@@ -3,15 +3,20 @@ package net.minecraft.src;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
 
 public class Packet62LevelSound extends Packet
 {
     /** e.g. step.grass */
     private String soundName;
-    private int field_73577_b;
-    private int field_73578_c = Integer.MAX_VALUE;
-    private int field_73575_d;
+
+    /** Effect X multiplied by 8 */
+    private int effectX;
+
+    /** Effect Y multiplied by 8 */
+    private int effectY = Integer.MAX_VALUE;
+
+    /** Effect Z multiplied by 8 */
+    private int effectZ;
 
     /** 1 is 100%. Can be more. */
     private float volume;
@@ -21,14 +26,14 @@ public class Packet62LevelSound extends Packet
 
     public Packet62LevelSound() {}
 
-    public Packet62LevelSound(String soundName, double x, double y, double z, float volume, float pitch)
+    public Packet62LevelSound(String par1Str, double par2, double par4, double par6, float par8, float par9)
     {
-        this.soundName = soundName;
-        this.field_73577_b = (int)(x * 8.0D);
-        this.field_73578_c = (int)(y * 8.0D);
-        this.field_73575_d = (int)(z * 8.0D);
-        this.volume = volume;
-        this.pitch = (int)(pitch * 63.0F);
+        this.soundName = par1Str;
+        this.effectX = (int)(par2 * 8.0D);
+        this.effectY = (int)(par4 * 8.0D);
+        this.effectZ = (int)(par6 * 8.0D);
+        this.volume = par8;
+        this.pitch = (int)(par9 * 63.0F);
 
         if (this.pitch < 0)
         {
@@ -47,9 +52,9 @@ public class Packet62LevelSound extends Packet
     public void readPacketData(DataInputStream par1DataInputStream) throws IOException
     {
         this.soundName = readString(par1DataInputStream, 32);
-        this.field_73577_b = par1DataInputStream.readInt();
-        this.field_73578_c = par1DataInputStream.readInt();
-        this.field_73575_d = par1DataInputStream.readInt();
+        this.effectX = par1DataInputStream.readInt();
+        this.effectY = par1DataInputStream.readInt();
+        this.effectZ = par1DataInputStream.readInt();
         this.volume = par1DataInputStream.readFloat();
         this.pitch = par1DataInputStream.readUnsignedByte();
     }
@@ -60,39 +65,42 @@ public class Packet62LevelSound extends Packet
     public void writePacketData(DataOutputStream par1DataOutputStream) throws IOException
     {
         writeString(this.soundName, par1DataOutputStream);
-        par1DataOutputStream.writeInt(this.field_73577_b);
-        par1DataOutputStream.writeInt(this.field_73578_c);
-        par1DataOutputStream.writeInt(this.field_73575_d);
+        par1DataOutputStream.writeInt(this.effectX);
+        par1DataOutputStream.writeInt(this.effectY);
+        par1DataOutputStream.writeInt(this.effectZ);
         par1DataOutputStream.writeFloat(this.volume);
         par1DataOutputStream.writeByte(this.pitch);
     }
 
-    public String func_73570_d()
+    public String getSoundName()
     {
         return this.soundName;
     }
 
-    public double func_73572_f()
+    public double getEffectX()
     {
-        return (double)((float)this.field_73577_b / 8.0F);
+        return (double)((float)this.effectX / 8.0F);
     }
 
-    public double func_73568_g()
+    public double getEffectY()
     {
-        return (double)((float)this.field_73578_c / 8.0F);
+        return (double)((float)this.effectY / 8.0F);
     }
 
-    public double func_73569_h()
+    public double getEffectZ()
     {
-        return (double)((float)this.field_73575_d / 8.0F);
+        return (double)((float)this.effectZ / 8.0F);
     }
 
-    public float func_73571_i()
+    public float getVolume()
     {
         return this.volume;
     }
 
-    public float func_73573_j()
+    /**
+     * Gets the pitch divided by 63 (63 is 100%)
+     */
+    public float getPitch()
     {
         return (float)this.pitch / 63.0F;
     }
@@ -103,7 +111,7 @@ public class Packet62LevelSound extends Packet
     public void processPacket(NetHandler par1NetHandler)
     {
         // begin modified code
-        if (SoundMuffler.checkMuffle(soundName, func_73572_f(), func_73568_g(), func_73569_h())) {
+        if (SoundMuffler.checkMuffle(soundName, getEffectX(), getEffectY(), getEffectZ())) {
             par1NetHandler.handleLevelSound(this);
         }
         // end modified code

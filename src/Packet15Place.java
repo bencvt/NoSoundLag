@@ -4,8 +4,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import net.minecraft.client.Minecraft;
-
 public class Packet15Place extends Packet
 {
     private int xPosition;
@@ -27,18 +25,18 @@ public class Packet15Place extends Packet
 
     public Packet15Place() {}
 
-    public Packet15Place(int x, int y, int z, int direction, ItemStack itemStack, float xOff, float yOff, float zOff)
+    public Packet15Place(int par1, int par2, int par3, int par4, ItemStack par5ItemStack, float par6, float par7, float par8)
     {
-        this.xPosition = x;
-        this.yPosition = y;
-        this.zPosition = z;
-        this.direction = direction;
-        this.itemStack = itemStack;
-        this.xOffset = xOff;
-        this.yOffset = yOff;
-        this.zOffset = zOff;
+        this.xPosition = par1;
+        this.yPosition = par2;
+        this.zPosition = par3;
+        this.direction = par4;
+        this.itemStack = par5ItemStack;
+        this.xOffset = par6;
+        this.yOffset = par7;
+        this.zOffset = par8;
         // begin modified code
-        Packet15PlaceHook.onBlockPlace(x, y, z, direction, itemStack);
+        Packet15PlaceHook.onBlockPlace(xPosition, yPosition, zPosition, direction, itemStack);
         // end modified code
     }
 

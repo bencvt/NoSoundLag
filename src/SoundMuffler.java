@@ -16,6 +16,7 @@ import net.minecraft.client.Minecraft;
  */
 public abstract class SoundMuffler {
     public static final String SOURCE_URL = "https://github.com/bencvt/NoSoundLag";
+    public static boolean DEBUG = true;
     public static final long MAX_LATENCY = 5000L; // that's one wicked ping time
     public static final double STEP_RADIUS_SQUARED = 9.0; // blocks^2
     private static final HashMap<String, Long> blockSounds = new HashMap<String, Long>();
@@ -29,7 +30,9 @@ public abstract class SoundMuffler {
         final long now = System.currentTimeMillis();
         String key = getBlockSoundKey(soundName, blockX, blockY, blockZ);
         blockSounds.put(key, now + MAX_LATENCY);
-        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a75muffling block... " + key);
+        if (DEBUG) {
+            log("\u00a75muffling block... " + key);
+        }
         if (now > lastRemoveExpired + 60000L) {
             removeExpiredBlockSounds();
         }
@@ -59,9 +62,11 @@ public abstract class SoundMuffler {
      */
     public static void muffleStep(double x, double y, double z) {
         final long now = System.currentTimeMillis();
-        Vec3 v = new Vec3(x, y, z);
+        Vec3 v = Vec3.createVectorHelper(x, y, z);
         lastSteps.put(v, now + MAX_LATENCY);
-        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a75muffling step... (" + (int)x + "," + (int)y + "," + (int)z + ")");
+        if (DEBUG) {
+            log("\u00a75muffling step... (" + (int)x + "," + (int)y + "," + (int)z + ")");
+        }
     }
 
     /**
@@ -74,7 +79,9 @@ public abstract class SoundMuffler {
         String key = getBlockSoundKey(soundName, getBlockCoord(x), getBlockCoord(y), getBlockCoord(z));
         Long blockExpiry = blockSounds.remove(key);
         if (blockExpiry != null && now < blockExpiry) {
-            //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a74...muffled block " + key);
+            if (DEBUG) {
+                log("\u00a74...muffled block " + key);
+            }
             return false;
         }
 
@@ -87,13 +94,17 @@ public abstract class SoundMuffler {
                 if (now >= stepExpiry) {
                     it.remove();
                 } else if (inRange(v, x, y, z)) {
-                    //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a74...muffled step " + key);
+                    if (DEBUG) {
+                        log("\u00a74...muffled step " + key);
+                    }
                     return false;
                 }
             }
         }
 
-        //Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage("\u00a72allowed " + key);
+        if (DEBUG) {
+            log("\u00a72allowed " + key);
+        }
         return true;
     }
 
@@ -113,5 +124,9 @@ public abstract class SoundMuffler {
 
     private static int getBlockCoord(double coord) {
         return (int) (coord > 0.0 ? coord : coord - 1.0);
+    }
+
+    private static void log(String message) {
+        Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(message);
     }
 }
