@@ -28,13 +28,13 @@ code duplicated by the client. One unfortunate side effect is that if you're on
 a noticeably laggy connection, your block placement and footstep sounds will
 lag as well. The server controls those sounds now, not the client.
 
-A proper fix will involve changing both the server and the client, which doesn't
-appear to be coming from Mojang right away. There is an official bug report
-filed for it: **[MC-30](https://mojang.atlassian.net/browse/MC-30)**.
+A proper fix will involve changing both the server and the client, and has been
+completed by Mojang. It's not released yet, though... likely slated for 1.4.3
+or 1.5. See the official bug report:
+**[MC-30](https://mojang.atlassian.net/browse/MC-30)**.
 
-In the meantime, this client mod exists. It does not require any server-side
-modifications, so it's not perfect: a stray extra footstep might sneak through
-from time to time.
+Once this official fix is released, NoSoundLag will die a happy death! Until
+then, it's a useful stop-gap.
 
 NoSoundLag is open source! Check the official GitHub project for the changelog,
 build instructions, and full source code:
