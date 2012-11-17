@@ -1,3 +1,8 @@
+## 1.4.5
+- recompiled for Minecraft 1.4.5. Also compatible with 1.4.4.
+- removed footstep muffling as Mojang has fixed this. It's only block placement
+  that's still bugged (and fixed by this mod).
+
 ## 1.4.2
 - recompiled for Minecraft 1.4.2
 - added fix for player splashes as well. Thanks @RustyDagger for the report.

@@ -55,7 +55,7 @@ public abstract class Packet15PlaceHook {
         }
 
         StepSound blockSound = Block.blocksList[placeBlockId].stepSound;
-        String blockSoundId = blockSound.func_82593_b();
+        String blockSoundId = blockSound.getPlaceSound();
         // parameter math copied from ItemBlock.onItemUse()
         Minecraft.getMinecraft().sndManager.playSound(
                 blockSoundId,
@@ -68,36 +68,39 @@ public abstract class Packet15PlaceHook {
     }
 
     public static boolean doesBlockPreventRightClick(int x, int y, int z) {
-        return BLOCKIDS_PREVENTING_RIGHT_CLICK.contains(Minecraft.getMinecraft().theWorld.getBlockId(x, y, z));
+        return blockIdsConsumingRightClick.contains(Minecraft.getMinecraft().theWorld.getBlockId(x, y, z));
     }
     /**
      * List of block ids that intercept right-click when attempting to place a block adjacent to it.
      * I.e., the block's class overrides onBlockActivated() to return true when the player is holding an ItemBlock.
      */
-    public static final HashSet<Integer> BLOCKIDS_PREVENTING_RIGHT_CLICK = new HashSet<Integer>();
-    private static void _add(Block block) { BLOCKIDS_PREVENTING_RIGHT_CLICK.add(block.blockID); }
-    static {
-        _add(Block.bed);
-        _add(Block.brewingStand);
-        _add(Block.button);
-        _add(Block.cake);
-        _add(Block.cauldron);
-        _add(Block.chest);
-        _add(Block.dispenser);
-        _add(Block.doorSteel);
-        _add(Block.doorWood);
-        _add(Block.dragonEgg);
-        _add(Block.enchantmentTable);
-        _add(Block.enderChest);
-        _add(Block.fenceGate);
-        _add(Block.stoneOvenActive);
-        _add(Block.stoneOvenIdle);
-        _add(Block.jukebox); // actually, returns false if there is no record inside. Just let this sound lag.
-        _add(Block.lever);
-        _add(Block.music);
-        _add(Block.redstoneRepeaterActive);
-        _add(Block.redstoneRepeaterIdle);
-        _add(Block.trapdoor);
-        _add(Block.workbench);
-    }
+    private static final HashSet<Integer> blockIdsConsumingRightClick =
+            new HashSet<Integer>(Arrays.asList(new Integer[] {
+                    Block.anvil.blockID,
+                    Block.beacon.blockID,
+                    Block.bed.blockID,
+                    Block.brewingStand.blockID,
+                    Block.cake.blockID,
+                    Block.cauldron.blockID,
+                    Block.chest.blockID,
+                    Block.commandBlock.blockID,
+                    Block.dispenser.blockID,
+                    Block.doorSteel.blockID,
+                    Block.doorWood.blockID,
+                    Block.dragonEgg.blockID,
+                    Block.enchantmentTable.blockID,
+                    Block.enderChest.blockID,
+                    Block.fenceGate.blockID,
+                    Block.jukebox.blockID, // actually, returns false if there is no record inside. Just let this sound lag.
+                    Block.lever.blockID,
+                    Block.music.blockID, // a.k.a. note block
+                    Block.redstoneRepeaterActive.blockID,
+                    Block.redstoneRepeaterIdle.blockID,
+                    Block.stoneButton.blockID,
+                    Block.stoneOvenActive.blockID,
+                    Block.stoneOvenIdle.blockID,
+                    Block.trapdoor.blockID,
+                    Block.woodenButton.blockID,
+                    Block.workbench.blockID // a.k.a. crafting table
+            }));
 }

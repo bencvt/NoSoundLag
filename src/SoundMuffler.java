@@ -16,10 +16,10 @@ import net.minecraft.client.Minecraft;
  */
 public abstract class SoundMuffler {
     public static final String SOURCE_URL = "https://github.com/bencvt/NoSoundLag";
+    public static final String VERSION = "1.4.5";
     public static boolean DEBUG = false;
     public static final long MAX_LATENCY = 5000L; // that's one wicked ping time
     public static final long CLEAN_EXPIRED_INTERVAL = 60000L;
-    public static final double FUZZY_TRAIL_RADIUS_SQUARED = 9.0; // blocks^2
 
     public static class SoundTrailNode {
         public final Vec3 pos;
@@ -48,7 +48,7 @@ public abstract class SoundMuffler {
             } else {
                 trail.put(key, new SoundTrailNode(blockX, blockY, blockZ, now + MAX_LATENCY));
             }
-            if (DEBUG && !name.equals("walk")) {
+            if (DEBUG) {
                 log("\u00a75updated sound trail " + name + ": " + key + "; size=" + trail.size());
             }
 
@@ -87,57 +87,21 @@ public abstract class SoundMuffler {
             }
             return false;
         }
-
-        public boolean isOnTrailFuzzy(double x, double y, double z) {
-            final long now = System.currentTimeMillis();
-            final Iterator<SoundTrailNode> it = trail.values().iterator();
-            while (it.hasNext()) {
-                SoundTrailNode node = it.next();
-                if (now >= node.expiry) {
-                    it.remove();
-                } else if (node.pos.squareDistanceTo(x, y, z) < FUZZY_TRAIL_RADIUS_SQUARED) {
-                    // Do not remove the node; it's not expired yet.
-                    return true;
-                }
-            }
-            return false;
-        }
     }
 
     public static final SoundTrail placeTrail = new SoundTrail("place");
-    public static final SoundTrail walkTrail = new SoundTrail("walk");
 
     /**
      * @return true if the sound event should be played, false to filter out
      */
     public static boolean checkMuffle(String soundName, double x, double y, double z) {
         String key = getSoundEventKey(soundName, getBlockCoord(x), getBlockCoord(y), getBlockCoord(z));
-
-        // Block placement: exact.
-        //
-        // Not bulletproof, though: if a player places, destroys, then replaces
-        // the same exact block within their latency time, they may get echoes.
         if (placeTrail.isOnTrailExact(key)) {
             if (DEBUG) {
                 log("\u00a74...muffled place: " + key);
             }
             return false;
         }
-
-        // Player trail: fuzzy.
-        //
-        // We may end up muffling some other entity's step/splash sound if
-        // they're following the player entity closely. Alas, this is
-        // unavoidable.
-        if (soundName.startsWith("step.") || soundName.equals("liquid.splash")) {
-            if (walkTrail.isOnTrailFuzzy(x, y, z)) {
-                if (DEBUG) {
-                    log("\u00a74...muffled walk: " + key);
-                }
-                return false;
-            }
-        }
-
         if (DEBUG) {
             log("\u00a72allowed " + key);
         }
