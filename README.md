@@ -17,8 +17,8 @@ This mod does *not* require ModLoader or any other mod management system.
 
 Should be compatible with every mod that does not overwrite:
 
-- `fl.class` (Packet15Place)
-- `dw.class` (Packet62LevelSound)
+- `fk.class` (Packet15Place)
+- `dv.class` (Packet62LevelSound)
 
 ## More info
 
@@ -28,9 +28,9 @@ a noticeably laggy connection, your block placement sounds will lag as well. The
 server controls those sounds now, not the client.
 
 A proper fix will involve changing both the server and the client. Mojang
-[partially fixed this issue](https://mojang.atlassian.net/browse/MC-30) in
-1.4.3, but we're still wait on a
-[fix for block placement sounds](https://mojang.atlassian.net/browse/MC-3250).
+partially fixed this issue in 1.4.3, but we're still wait on a fix for block
+placement sounds. The issue is in the Mojira bug tracker:
+**[MC-55](https://mojang.atlassian.net/browse/MC-55)**
 
 Once Minecraft's sound lag issues are completely fixed, NoSoundLag will die a
 happy death! Until then, it's a useful stop-gap.

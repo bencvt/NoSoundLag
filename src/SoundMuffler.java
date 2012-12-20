@@ -16,23 +16,13 @@ import net.minecraft.client.Minecraft;
  */
 public abstract class SoundMuffler {
     public static final String SOURCE_URL = "https://github.com/bencvt/NoSoundLag";
-    public static final String VERSION = "1.4.5";
+    public static final String VERSION = "1.4.6";
     public static boolean DEBUG = false;
-    public static final long MAX_LATENCY = 5000L; // that's one wicked ping time
-    public static final long CLEAN_EXPIRED_INTERVAL = 60000L;
-
-    public static class SoundTrailNode {
-        public final Vec3 pos;
-        public long expiry;
-
-        public SoundTrailNode(int blockX, int blockY, int blockZ, long expiry) {
-            pos = Vec3.createVectorHelper(blockX, blockY, blockZ);
-            this.expiry = expiry;
-        }
-    }
+    public static long MAX_LATENCY = 5000L; // that's one wicked ping time
+    public static long CLEAN_EXPIRED_INTERVAL = 60000L;
 
     public static class SoundTrail {
-        private final HashMap<String, SoundTrailNode> trail = new HashMap<String, SoundTrailNode>();
+        private final HashMap<String, Long> trail = new HashMap<String, Long>();
         private final String name;
         private long nextClean;
 
@@ -43,11 +33,7 @@ public abstract class SoundMuffler {
         public void update(String soundName, int blockX, int blockY, int blockZ) {
             final long now = System.currentTimeMillis();
             String key = getSoundEventKey(soundName, blockX, blockY, blockZ);
-            if (trail.containsKey(key)) {
-                trail.get(key).expiry = now + MAX_LATENCY;
-            } else {
-                trail.put(key, new SoundTrailNode(blockX, blockY, blockZ, now + MAX_LATENCY));
-            }
+            trail.put(key, now + MAX_LATENCY);
             if (DEBUG) {
                 log("\u00a75updated sound trail " + name + ": " + key + "; size=" + trail.size());
             }
@@ -57,10 +43,9 @@ public abstract class SoundMuffler {
             // respawned elsewhere.
             if (now >= nextClean) {
                 int count = 0;
-                final Iterator<SoundTrailNode> it = trail.values().iterator();
+                final Iterator<Long> it = trail.values().iterator();
                 while (it.hasNext()) {
-                    SoundTrailNode node = it.next();
-                    if (now >= node.expiry) {
+                    if (now >= it.next()) {
                         count++;
                         it.remove();
                     }
@@ -73,13 +58,9 @@ public abstract class SoundMuffler {
             }
         }
 
-        public void update(double x, double y, double z) {
-            update("", getBlockCoord(x), getBlockCoord(y), getBlockCoord(z));
-        }
-
         public boolean isOnTrailExact(String key) {
             if (trail.containsKey(key)) {
-                if (System.currentTimeMillis() >= trail.get(key).expiry) {
+                if (System.currentTimeMillis() >= trail.get(key)) {
                     trail.remove(key);
                 } else {
                     return true;
