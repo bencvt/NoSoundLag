@@ -2,6 +2,12 @@ When playing multiplayer Minecraft, are you annoyed that when you place a block,
 it takes a second for the sound to happen? Install this mod and the sound lag
 will disappear.
 
+## Download
+
+Grab the latest binary linked from [the official thread on minecraftforum.net](http://www.minecraftforum.net/topic/1414774-nosoundlag/).
+Alternately, you can browse binaries for [previous versions](http://download.bencvt.com/minecraft/nosoundlag/)
+or refer to `README-dev.md` to build from source.
+
 ## Installation
 
 Works exactly like any other Minecraft client mod.
