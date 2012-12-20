@@ -1,3 +1,6 @@
+## 1.4.6
+- recompiled for Minecraft 1.4.6
+
 ## 1.4.5
 - recompiled for Minecraft 1.4.5. Also compatible with 1.4.4.
 - removed footstep muffling as Mojang has fixed this. It's only block placement
